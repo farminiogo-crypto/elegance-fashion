@@ -603,7 +603,26 @@ async def call_gemini(user_message: str, products_context: str, history: List[Ch
         }
     
     try:
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        # Try different models with fallback
+        model = None
+        model_names = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-pro']
+        
+        for model_name in model_names:
+            try:
+                model = genai.GenerativeModel(model_name)
+                log(f"Using Gemini model: {model_name}")
+                break
+            except Exception as e:
+                log(f"Model {model_name} failed: {e}", "WARNING")
+                continue
+        
+        if not model:
+            log("All Gemini models failed!", "ERROR")
+            return {
+                "reply": "أهلاً بيك! عندنا تشكيلة حلوة. قولي بتدور على إيه؟",
+                "recommendations": [],
+                "language": "ar"
+            }
         
         system_prompt = get_anti_hallucination_prompt()
         

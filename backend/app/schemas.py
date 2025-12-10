@@ -46,13 +46,13 @@ class ProductBase(BaseModel):
     price: float
     category: str
     subcategory: Optional[str] = None
-    images: List[str]
-    colors: List[str]
-    sizes: List[str]
+    images: Optional[List[str]] = []
+    colors: Optional[List[str]] = []
+    sizes: Optional[List[str]] = []
     description: Optional[str] = None
     featured: bool = False
-    rating: float = 0.0
-    reviews: int = 0
+    rating: Optional[float] = 0.0
+    reviews: Optional[int] = 0
 
 
 class ProductCreate(ProductBase):
@@ -78,8 +78,8 @@ class ProductUpdate(BaseModel):
 class ProductResponse(ProductBase):
     id: str
     sale_price: Optional[float] = None
-    stock: int = 0  # Include stock in API response
-    created_at: datetime
+    stock: Optional[int] = 0  # Include stock in API response
+    created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
     # Clean display fields (computed dynamically)
     short_name: Optional[str] = None
