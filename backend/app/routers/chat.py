@@ -75,28 +75,51 @@ def detect_language(text: str) -> str:
 
 
 def search_products(db: Session, query: str, limit: int = 10) -> List[dict]:
-    """Simple keyword search in database"""
+    """Simple keyword search in database - ALWAYS returns products"""
     try:
-        words = query.lower().split()
+        query_lower = query.lower()
+        
+        # Arabic to English keyword mapping
+        keyword_map = {
+            'بدلة': 'suit', 'بدل': 'suit', 'فستان': 'dress', 'فساتين': 'dress',
+            'قميص': 'shirt', 'شيرت': 'shirt', 'بنطلون': 'pants', 'جينز': 'jeans',
+            'جاكيت': 'jacket', 'شنطة': 'bag', 'حذاء': 'shoes', 'فرح': 'formal',
+            'سهرة': 'dress', 'كاجوال': 'casual', 'رسمي': 'formal',
+            'رجالي': 'men', 'حريمي': 'women'
+        }
+        
+        # Build search terms
+        search_terms = []
+        for word in query_lower.split():
+            if word in keyword_map:
+                search_terms.append(keyword_map[word])
+            elif len(word) > 2:
+                search_terms.append(word)
+        
+        print(f"🔍 Search terms: {search_terms}")
         
         # Build filters
         filters = []
-        for word in words[:5]:  # First 5 words only
-            if len(word) > 2:
-                pattern = f"%{word}%"
-                filters.append(func.lower(Product.name).like(pattern))
-                filters.append(func.lower(Product.category).like(pattern))
+        for term in search_terms[:5]:
+            pattern = f"%{term}%"
+            filters.append(func.lower(Product.name).like(pattern))
+            filters.append(func.lower(Product.category).like(pattern))
+            filters.append(func.lower(Product.sub_category).like(pattern))
         
-        if not filters:
-            # Return some products as fallback
-            products = db.query(Product).limit(limit).all()
-        else:
+        # Try to find matching products
+        products = []
+        if filters:
             products = db.query(Product).filter(or_(*filters)).limit(limit).all()
+            print(f"📦 Filter search found: {len(products)}")
+        
+        # FALLBACK: If no products found, return random products
+        if not products:
+            print("⚠️ No match - returning fallback products")
+            products = db.query(Product).limit(limit).all()
         
         # Convert to dict list
         result = []
         for p in products:
-            # Get image
             images = p.images or []
             if isinstance(images, str):
                 try:
@@ -115,7 +138,7 @@ def search_products(db: Session, query: str, limit: int = 10) -> List[dict]:
                 "image": image
             })
         
-        print(f"✅ Found {len(result)} products for query: {query[:50]}...")
+        print(f"✅ Returning {len(result)} products")
         return result
         
     except Exception as e:
