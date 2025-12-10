@@ -133,8 +133,23 @@ def call_gemini(user_message: str, products: List[dict], language: str) -> dict:
         }
     
     try:
-        # Use gemini-pro only (stable)
-        model = genai.GenerativeModel('gemini-pro')
+        # Try different models
+        model = None
+        for model_name in ['gemini-1.5-flash', 'gemini-pro', 'gemini-1.0-pro']:
+            try:
+                model = genai.GenerativeModel(model_name)
+                print(f"✅ Using model: {model_name}")
+                break
+            except Exception as model_err:
+                print(f"⚠️ Model {model_name} failed: {model_err}")
+                continue
+        
+        if not model:
+            print("❌ All models failed!")
+            return {
+                "reply": "أهلاً بيك! قولي بتدور على إيه؟" if language == 'ar' else "Hello! What are you looking for?",
+                "recommendations": []
+            }
         
         # Build products context
         if products:
