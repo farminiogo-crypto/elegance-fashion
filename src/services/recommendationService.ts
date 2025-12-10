@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:8000/api';
+const API_BASE_URL = import.meta.env.PROD ? 'https://elegance-fashion-production.up.railway.app/api' : 'http://localhost:8000/api';
 
 // Generate or retrieve session ID for anonymous users
 const getSessionId = (): string => {
