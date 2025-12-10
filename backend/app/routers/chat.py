@@ -117,10 +117,12 @@ def extract_intent_from_query(query: str) -> dict:
         intent["item_type"] = "dress"
     elif any(word in query_lower for word in ['لانجري', 'لانجيري', 'لانچري', 'ملابس داخلية', 'داخلي']):
         intent["item_type"] = "lingerie"
-    elif any(word in query_lower for word in ['شنطة', 'شنط', 'حقيبة', 'حقائب', 'شنطه']):
+    elif any(word in query_lower for word in ['شنطة', 'شنط', 'حقيبة', 'حقائب', 'شنطه', 'bag']):
         intent["item_type"] = "bag"
-    elif any(word in query_lower for word in ['قميص', 'بلوزة', 'تيشرت', 'تي شيرت', 'توب', 'طقم', 'ملابس', 'لبس', 'اوتفيت', 'outfit']):
+    elif any(word in query_lower for word in ['قميص', 'بلوزة', 'تيشرت', 'تي شيرت', 'توب']):
         intent["item_type"] = "top"
+    elif any(word in query_lower for word in ['طقم', 'ملابس', 'لبس', 'اوتفيت', 'outfit', 'look', 'لوك']):
+        intent["item_type"] = "clothing"  # Special case - need full outfit
     elif any(word in query_lower for word in ['حذاء', 'جزمة', 'احذية', 'صندل']):
         intent["item_type"] = "shoes"
     elif any(word in query_lower for word in ['ساعة', 'خاتم', 'حلق', 'سلسلة', 'اكسسوار', 'طاقية', 'قبعة']):
@@ -251,6 +253,28 @@ def search_catalog(db: Session, query: str, limit: int = 15) -> List[Product]:
     
     # ===== LEVEL 1: Strict tag-based filtering =====
     candidates = []
+    
+    # ===== SPECIAL: If looking for clothing/outfit, search actual clothes first =====
+    if intent_item_type == "clothing":
+        clothing_subcats = ['dress', 'shirt', 't-shirt', 'pants', 'trouser', 'jacket', 'skirt', 'sweater', 'sleeve']
+        base_query = db.query(Product).filter(
+            or_(
+                Product.sub_category.in_(clothing_subcats),
+                func.lower(Product.name).like('%dress%'),
+                func.lower(Product.name).like('%shirt%'),
+                func.lower(Product.name).like('%pants%'),
+                func.lower(Product.name).like('%jacket%'),
+                func.lower(Product.name).like('%blouse%'),
+                func.lower(Product.name).like('%skirt%'),
+                func.lower(Product.name).like('%top %'),
+                func.lower(Product.name).like('%sweater%')
+            )
+        )
+        if intent_gender:
+            base_query = base_query.filter(func.lower(Product.category).like(f'%{intent_gender}%'))
+        candidates = base_query.limit(limit * 2).all()
+        if candidates:
+            print(f"✅ Found {len(candidates)} clothing items for outfit request")
     
     if intent_style or intent_occasion:
         base_query = db.query(Product)
