@@ -133,9 +133,9 @@ def call_gemini(user_message: str, products: List[dict], language: str) -> dict:
         }
     
     try:
-        # Try different models
+        # Try user's available models
         model = None
-        for model_name in ['gemini-1.5-flash', 'gemini-pro', 'gemini-1.0-pro']:
+        for model_name in ['gemini-2.0-flash', 'gemini-3-pro']:
             try:
                 model = genai.GenerativeModel(model_name)
                 print(f"✅ Using model: {model_name}")
@@ -177,8 +177,13 @@ Respond with JSON:
 
 Only recommend products from the list above. If no products match, just give styling advice."""
 
+        print(f"📤 Sending to Gemini (prompt length: {len(prompt)} chars)")
+        
         response = model.generate_content(prompt)
+        print("📥 Got response from Gemini")
+        
         text = response.text.strip()
+        print(f"📄 Response text: {text[:200]}...")
         
         # Clean markdown
         if "```json" in text:
@@ -191,12 +196,17 @@ Only recommend products from the list above. If no products match, just give sty
         end = text.rfind('}')
         if start != -1 and end != -1:
             text = text[start:end+1]
-            return json.loads(text)
+            result = json.loads(text)
+            print(f"✅ Parsed JSON successfully")
+            return result
         
+        print(f"⚠️ No JSON found, returning text as reply")
         return {"reply": text, "recommendations": []}
         
     except Exception as e:
+        import traceback
         print(f"❌ Gemini error: {e}")
+        print(f"❌ Traceback: {traceback.format_exc()}")
         return {
             "reply": "أهلاً بيك! في مشكلة تقنية بسيطة. قولي بتدور على إيه؟" if language == 'ar' else "Hi! There was a small issue. What are you looking for?",
             "recommendations": []
