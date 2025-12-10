@@ -97,10 +97,11 @@ def extract_intent_from_query(query: str) -> dict:
         "occasion": None
     }
     
-    # Gender detection - Arabic
-    if any(word in query_lower for word in ['حريمي', 'حريمى', 'نسائي', 'نسائى', 'بنات', 'للنساء', 'للبنات', 'ستات']):
+    # Gender detection - Arabic (including feminine verb forms)
+    # عايزة/محتاجة/بدور = feminine forms indicate women
+    if any(word in query_lower for word in ['حريمي', 'حريمى', 'نسائي', 'نسائى', 'بنات', 'للنساء', 'للبنات', 'ستات', 'عايزة', 'محتاجة', 'بدوري', 'نفسي', 'فستان', 'فساتين']):
         intent["gender"] = "women"
-    elif any(word in query_lower for word in ['رجالي', 'رجالى', 'رجال', 'رجالة', 'للرجال', 'شباب']):
+    elif any(word in query_lower for word in ['رجالي', 'رجالى', 'رجال', 'رجالة', 'للرجال', 'شباب', 'عايز', 'محتاج', 'بدور']):
         intent["gender"] = "men"
     
     # Gender detection - English
@@ -174,8 +175,8 @@ def extract_intent_from_query(query: str) -> dict:
     # Daily/casual outing
     elif any(word in query_lower for word in ['daily', 'يومي', 'outing', 'خروج', 'عادي', 'everyday']):
         intent["occasion"] = "daily"
-    # Vacation/beach
-    elif any(word in query_lower for word in ['vacation', 'سفر', 'beach', 'بحر', 'holiday', 'resort', 'summer']):
+    # Vacation/beach - expanded Arabic
+    elif any(word in query_lower for word in ['vacation', 'سفر', 'beach', 'بحر', 'للبحر', 'البحر', 'holiday', 'resort', 'summer', 'صيف', 'صيفي', 'مصيف', 'ساحل', 'رحلة']):
         intent["occasion"] = "vacation"
     # Gym
     elif any(word in query_lower for word in ['gym', 'جيم', 'workout', 'exercise', 'training', 'تمرين']):
