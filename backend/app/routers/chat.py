@@ -282,7 +282,7 @@ def search_catalog(db: Session, query: str, limit: int = 15) -> List[Product]:
                 func.lower(Product.category).like(f'%{intent_gender}%')
             )
         
-        candidates = base_query.order_by(Product.rating.desc()).limit(limit * 2).all()
+        candidates = base_query.limit(limit * 2).all()
         
         if candidates:
             print(f"✅ Level 1 (Tag filter): Found {len(candidates)} products")
@@ -301,7 +301,7 @@ def search_catalog(db: Session, query: str, limit: int = 15) -> List[Product]:
         if conditions:
             candidates = db.query(Product).filter(
                 or_(*conditions)
-            ).order_by(Product.rating.desc()).limit(limit * 3).all()
+            ).limit(limit * 3).all()
             
             if candidates:
                 print(f"✅ Level 2 (Keyword search): Found {len(candidates)} products")
@@ -312,7 +312,7 @@ def search_catalog(db: Session, query: str, limit: int = 15) -> List[Product]:
         if intent_gender:
             candidates = db.query(Product).filter(
                 func.lower(Product.category).like(f'%{intent_gender}%')
-            ).order_by(Product.rating.desc()).limit(limit * 2).all()
+            ).limit(limit * 2).all()
         
         # Or just style filter (with multiple patterns for double-encoded JSON)
         if not candidates and intent_style:
@@ -322,7 +322,7 @@ def search_catalog(db: Session, query: str, limit: int = 15) -> List[Product]:
                     func.lower(Product.style_tags).like(f'%\\"{intent_style}\\"%'),
                     func.lower(Product.style_tags).like(f'%{intent_style}%')
                 )
-            ).order_by(Product.rating.desc()).limit(limit * 2).all()
+            ).limit(limit * 2).all()
         
         if candidates:
             print(f"✅ Level 3 (Broad filter): Found {len(candidates)} products")
@@ -330,7 +330,7 @@ def search_catalog(db: Session, query: str, limit: int = 15) -> List[Product]:
     # ===== LEVEL 4: Final fallback - top rated products =====
     if not candidates:
         # Return top-rated products as absolute fallback
-        candidates = db.query(Product).order_by(Product.rating.desc()).limit(limit * 2).all()
+        candidates = db.query(Product).limit(limit * 2).all()
         print(f"⚠️ Level 4 (Fallback): Returning top {len(candidates)} rated products")
     
     # ===== RE-RANKING based on full intent =====
