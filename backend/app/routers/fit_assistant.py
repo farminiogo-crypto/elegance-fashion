@@ -94,8 +94,9 @@ def get_candidate_products(db: Session, request: FitAssistantRequest, limit: int
     if request.budget_max is not None:
         query = query.filter(Product.price <= request.budget_max)
     
-    # Order by rating and get candidates
-    products = query.order_by(Product.rating.desc()).limit(limit).all()
+    # Order by ID (simpler, no sort memory) and get candidates
+    # Reduced limit for Railway free tier memory constraints
+    products = query.limit(min(limit, 20)).all()
     
     # If too few results, relax the category filter
     if len(products) < 10:
@@ -104,7 +105,7 @@ def get_candidate_products(db: Session, request: FitAssistantRequest, limit: int
             query = query.filter(Product.price >= request.budget_min)
         if request.budget_max is not None:
             query = query.filter(Product.price <= request.budget_max)
-        products = query.order_by(Product.rating.desc()).limit(limit).all()
+        products = query.limit(min(limit, 20)).all()
     
     return products
 

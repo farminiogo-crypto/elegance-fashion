@@ -150,8 +150,8 @@ async def get_trending_products(
         return trending
     except Exception as e:
         print(f"Error getting trending products: {e}")
-        # Fallback to highest rated products
-        return db.query(Product).order_by(Product.rating.desc()).limit(limit).all()
+        # Fallback to simple query (avoid ORDER BY for Railway memory limits)
+        return db.query(Product).limit(min(limit, 6)).all()
 
 
 @router.get("/recently-viewed", response_model=List[ProductResponse])
