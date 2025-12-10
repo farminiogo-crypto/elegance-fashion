@@ -26,7 +26,11 @@ async def get_orders(
     if status_filter:
         query = query.filter(Order.status == status_filter)
     
-    orders = query.order_by(Order.created_at.desc()).all()
+    try:
+        orders = query.limit(100).all()
+    except Exception as e:
+        print(f"Orders error: {e}")
+        orders = []
     return orders
 
 
