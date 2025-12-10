@@ -358,6 +358,35 @@ def search_catalog(db: Session, query: str, limit: int = 15) -> List[Product]:
         candidates = db.query(Product).limit(limit * 2).all()
         print(f"⚠️ Level 4 (Fallback): Returning top {len(candidates)} rated products")
     
+    # ===== CRITICAL: For outfit requests, ALWAYS ensure we have clothing items =====
+    if intent_item_type == "clothing":
+        # Check if we have any actual clothing in candidates
+        clothing_keywords = ['dress', 'shirt', 'pants', 'trouser', 'jacket', 'blouse', 'skirt', 'sweater', 'top', 'jeans', 'blazer']
+        has_clothing = any(
+            any(kw in (c.name or '').lower() or kw in (c.sub_category or '').lower() for kw in clothing_keywords)
+            for c in candidates
+        )
+        
+        if not has_clothing:
+            # Force fetch some clothing items
+            print("⚠️ No clothing in candidates for outfit request - fetching clothes!")
+            clothing_items = db.query(Product).filter(
+                or_(
+                    Product.sub_category.in_(['dress', 'shirt', 't-shirt', 'pants', 'trouser', 'jacket', 'skirt']),
+                    func.lower(Product.name).like('%dress%'),
+                    func.lower(Product.name).like('%shirt%'),
+                    func.lower(Product.name).like('%pants%'),
+                    func.lower(Product.name).like('%jeans%')
+                )
+            )
+            if intent_gender:
+                clothing_items = clothing_items.filter(func.lower(Product.category).like(f'%{intent_gender}%'))
+            clothing_items = clothing_items.limit(10).all()
+            
+            if clothing_items:
+                print(f"✅ Added {len(clothing_items)} clothing items to candidates")
+                candidates = clothing_items + candidates[:limit - len(clothing_items)]
+
     # ===== RE-RANKING based on full intent =====
     scored_products = []
     for p in candidates:
